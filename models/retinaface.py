@@ -105,15 +105,18 @@ class RetinaFace(nn.Module):
         return landmarkhead
 
     def forward(self,inputs):
+        # inputs.shape ([32, 3, 640, 640])
+        # len(out) = 3
+        # out[1].shape = [32, 64, 80, 80], out[2].shape = [32, 128, 40, 40], out[3].shape = [32, 256, 20, 20]
         out = self.body(inputs)
 
         # FPN
-        fpn = self.fpn(out)
+        fpn = self.fpn(out)  # fpn[0].shape = [32, 64, 80, 80], fpn[1].shape = [32, 64, 40, 40], fpn[2].shape = [32, 64, 20, 20]
 
         # SSH
-        feature1 = self.ssh1(fpn[0])
-        feature2 = self.ssh2(fpn[1])
-        feature3 = self.ssh3(fpn[2])
+        feature1 = self.ssh1(fpn[0])    # [32, 64, 80, 80]
+        feature2 = self.ssh2(fpn[1])    # [32, 64, 40, 40]
+        feature3 = self.ssh3(fpn[2])    # [32, 64, 20, 20]
         features = [feature1, feature2, feature3]
 
         bbox_regressions = torch.cat([self.BboxHead[i](feature) for i, feature in enumerate(features)], dim=1)
