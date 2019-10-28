@@ -182,13 +182,6 @@ if __name__ == '__main__':
                     'src/deform_pool_cuda.cpp',
                     'src/deform_pool_cuda_kernel.cu'
                 ]),
-            make_cuda_ext(
-                name='sigmoid_focal_loss_cuda',
-                module='ops.sigmoid_focal_loss',
-                sources=[
-                    'src/sigmoid_focal_loss.cpp',
-                    'src/sigmoid_focal_loss_cuda.cu'
-                ]),
         ],
         cmdclass={'build_ext': BuildExtension},
         zip_safe=False)
