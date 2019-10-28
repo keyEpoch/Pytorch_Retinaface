@@ -5,6 +5,7 @@ import torchvision.models._utils as _utils
 import torchvision.models as models
 import torch.nn.functional as F
 from torch.autograd import Variable
+from ops import DeformConv, ModulatedDeformConv
 
 def conv_bn(inp, oup, stride = 1, leaky = 0):
     return nn.Sequential(
@@ -38,7 +39,7 @@ def conv_dw(inp, oup, stride, leaky=0.1):
     )
 
 class SSH(nn.Module):
-    def __init__(self, in_channel, out_channel):
+    def __init__(self, in_channel, out_channel, ssh_dcn, ssh_deformable_groups):
         super(SSH, self).__init__()
         assert out_channel % 4 == 0
         leaky = 0
@@ -52,6 +53,31 @@ class SSH(nn.Module):
         self.conv7X7_2 = conv_bn(out_channel//4, out_channel//4, stride=1, leaky = leaky)
         self.conv7x7_3 = conv_bn_no_relu(out_channel//4, out_channel//4, stride=1)
 
+        self.ssh_dcn = ssh_dcn
+        self.ssh_deformable_groups = ssh_deformable_groups
+
+        if self.ssh_dcn is not 0 and self.ssh_deformable_groups is not 0:
+            dcn_inchannel = out_channel
+            if self.ssh_dcn is 1:
+                self.dcn = DeformConv
+                offset_channels = 18
+            elif self.ssh_dcn is 2:
+                self.dcn = ModulatedDeformConv
+                offset_channels = 27
+
+            self.conv_offset = nn.Conv2d(dcn_inchannel,
+                                         self.ssh_deformable_groups * offset_channels,
+                                         kernel_size=3,
+                                         padding=1)
+            self.dcn_conv = self.dcn(dcn_inchannel,
+                                     dcn_inchannel,
+                                     kernel_size=3,
+                                     stride=1,
+                                     padding=1,
+                                     dilation=1,
+                                     deformable_groups=self.ssh_deformable_groups,
+                                     bias=False)
+
     def forward(self, input):
         conv3X3 = self.conv3X3(input)
 
@@ -63,11 +89,24 @@ class SSH(nn.Module):
 
         out = torch.cat([conv3X3, conv5X5, conv7X7], dim=1)
         out = F.relu(out)
+
+        # TODO: add dcn after relu
+        if self.ssh_dcn is not 0 and self.ssh_deformable_groups is not 0:
+            if self.ssh_dcn is 1:   # use dcn_v1
+                offset = self.conv_offset(out)
+                out = self.dcn_conv(out, offset)
+            else:                   # use_dcn_v2
+                offset_mask = self.conv_offset(out)
+                offset = offset_mask[:, :18*self.ssh_deformable_groups, :, :]
+                mask = offset_mask[:, -9*self.ssh_deformable_groups, :, :]
+                mask = 2.0 * mask.sigmoid()
+                out = self.dcn_conv(out, offset, mask)
+
         return out
 
 class FPN(nn.Module):
     def __init__(self,in_channels_list,out_channels):
-        super(FPN,self).__init__()
+        super(FPN, self).__init__()
         leaky = 0
         if (out_channels <= 64):
             leaky = 0.1

@@ -77,10 +77,14 @@ class RetinaFace(nn.Module):
             in_channels_stage2 * 8,
         ]
         out_channels = cfg['out_channel']
+
+        ssh_dcn = cfg.get('ssh_dcn', 0)
+        ssh_deformable_groups = cfg.get('ssh_deformable_groups', 0)
+
         self.fpn = FPN(in_channels_list,out_channels)
-        self.ssh1 = SSH(out_channels, out_channels)
-        self.ssh2 = SSH(out_channels, out_channels)
-        self.ssh3 = SSH(out_channels, out_channels)
+        self.ssh1 = SSH(out_channels, out_channels, ssh_dcn, ssh_deformable_groups)
+        self.ssh2 = SSH(out_channels, out_channels, ssh_dcn, ssh_deformable_groups)
+        self.ssh3 = SSH(out_channels, out_channels, ssh_dcn, ssh_deformable_groups)
 
         self.ClassHead = self._make_class_head(fpn_num=3, inchannels=cfg['out_channel'])
         self.BboxHead = self._make_bbox_head(fpn_num=3, inchannels=cfg['out_channel'])
