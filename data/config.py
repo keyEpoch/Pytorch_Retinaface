@@ -42,7 +42,7 @@ cfg_re50 = {
 }
 
 cfg_mnet_sshdcn_v1 = {
-    'name': 'mobilenet0.25',
+    'name': 'mobilenet0.25_sshdcn_v1',
     'min_sizes': [[16, 32], [64, 128], [256, 512]],
     'steps': [8, 16, 32],
     'variance': [0.1, 0.2],
@@ -64,7 +64,7 @@ cfg_mnet_sshdcn_v1 = {
 }
 
 cfg_re50_sshdcn_v1 = {
-    'name': 'Resnet50',
+    'name': 'Resnet50_sshdcn_v1',
     'min_sizes': [[16, 32], [64, 128], [256, 512]],
     'steps': [8, 16, 32],
     'variance': [0.1, 0.2],

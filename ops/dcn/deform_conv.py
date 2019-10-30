@@ -33,7 +33,8 @@ class DeformConvFunction(Function):
         ctx.deformable_groups = deformable_groups
         ctx.im2col_step = im2col_step
 
-        ctx.save_for_backward(input, offset, weight)
+        # ctx is a global context object
+        ctx.save_for_backward(input, offset, weight)    # stash these variables for backward
 
         output = input.new_empty(
             DeformConvFunction._output_size(input, weight, ctx.padding,
@@ -58,7 +59,7 @@ class DeformConvFunction(Function):
     @staticmethod
     @once_differentiable
     def backward(ctx, grad_output):
-        input, offset, weight = ctx.saved_tensors
+        input, offset, weight = ctx.saved_tensors       # read from ctx.save_for_backward() in forward
 
         grad_input = grad_offset = grad_weight = None
 

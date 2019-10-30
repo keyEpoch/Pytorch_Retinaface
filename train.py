@@ -23,12 +23,10 @@ parser.add_argument('--resume_net', default=None, help='resume net for retrainin
 parser.add_argument('--resume_epoch', default=0, type=int, help='resume iter for retraining')
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='Weight decay for SGD')
 parser.add_argument('--gamma', default=0.1, type=float, help='Gamma update for SGD')
-parser.add_argument('--save_folder', default='./weights/', help='Location to save checkpoint models')
+parser.add_argument('--save_folder', default='./work_dirs/', help='Location to save checkpoint models')
 
 args = parser.parse_args()
 
-if not os.path.exists(args.save_folder):
-    os.mkdir(args.save_folder)
 cfg = None
 if args.network == "mobile0.25":
     cfg = cfg_mnet
@@ -38,6 +36,11 @@ elif args.network == "mobile0.25_sshdcn":
     cfg = cfg_mnet_sshdcn_v1
 elif args.network == "resnet50_sshdcn":
     cfg = cfg_re50_sshdcn_v1
+
+save_folder = os.path.join(args.save_folder, args.network)
+
+if not os.path.exists(save_folder):
+    os.mkdir(save_folder)
 
 rgb_mean = (104, 117, 123) # bgr order
 num_classes = 2
@@ -53,7 +56,6 @@ weight_decay = args.weight_decay
 initial_lr = args.lr
 gamma = args.gamma
 training_dataset = args.training_dataset
-save_folder = args.save_folder
 
 net = RetinaFace(cfg=cfg)
 print("Printing net...")
