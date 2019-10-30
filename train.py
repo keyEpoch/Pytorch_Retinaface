@@ -24,6 +24,7 @@ parser.add_argument('--resume_epoch', default=0, type=int, help='resume iter for
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='Weight decay for SGD')
 parser.add_argument('--gamma', default=0.1, type=float, help='Gamma update for SGD')
 parser.add_argument('--save_folder', default='./work_dirs/', help='Location to save checkpoint models')
+parser.add_argument('--auto_resume', default=False, help='auto resume training when meet preempts')
 
 args = parser.parse_args()
 
@@ -37,8 +38,10 @@ elif args.network == "mobile0.25_sshdcn":
 elif args.network == "resnet50_sshdcn":
     cfg = cfg_re50_sshdcn_v1
 
-save_folder = os.path.join(args.save_folder, args.network)
+if not os.path.exists(args.save_folder):
+    os.mkdir(args.save_folder)
 
+save_folder = os.path.join(args.save_folder, args.network)
 if not os.path.exists(save_folder):
     os.mkdir(save_folder)
 
@@ -76,13 +79,33 @@ if args.resume_net is not None:
         new_state_dict[name] = v
     net.load_state_dict(new_state_dict)
 
+if args.auto_resume is not False:
+    pth_list = os.listdir(save_folder)
+    maxnum = 0
+    for pth_filename in pth_list:
+        maxnum = max(int(pth_filename.split("_")[4][:-4]), maxnum)
+    max_ep_name = cfg['name']+ '_epoch_' + str(maxnum) + '.pth'
+    print('Loading auto resume network...')
+    state_dict = torch.load(os.path.join(save_folder, max_ep_name))
+    print(os.path.join(save_folder, max_ep_name))
+    from collections import OrderedDict
+
+    new_state_dict = OrderedDict()
+    for k, v in state_dict.items():
+        head = k[:7]
+        if head == 'module.':
+            name = k[7:]  # remove `module.`
+        else:
+            name = k
+        new_state_dict[name] = v
+    net.load_state_dict(new_state_dict)
+
 if num_gpu > 1 and gpu_train:
     net = torch.nn.DataParallel(net).cuda()
 else:
     net = net.cuda()
 
 cudnn.benchmark = True
-
 
 optimizer = optim.SGD(net.parameters(), lr=initial_lr, momentum=momentum, weight_decay=weight_decay)
 criterion = MultiBoxLoss(num_classes, 0.35, True, 0, True, 7, 0.35, False)
@@ -92,9 +115,12 @@ with torch.no_grad():
     priors = priorbox.forward()
     priors = priors.cuda()
 
+
 def train():
     net.train()
     epoch = 0 + args.resume_epoch
+    epoch = maxnum if args.auto_resume is not False else epoch
+
     print('Loading Dataset...')
 
     dataset = WiderFaceDetection( training_dataset,preproc(img_dim, rgb_mean))
