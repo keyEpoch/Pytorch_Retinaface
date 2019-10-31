@@ -41,7 +41,7 @@ elif args.network == "resnet50_sshdcn":
 if not os.path.exists(args.save_folder):
     os.mkdir(args.save_folder)
 
-save_folder = os.path.join(args.save_folder, args.network)
+save_folder = os.path.join(args.save_folder, args.network) + '/'
 if not os.path.exists(save_folder):
     os.mkdir(save_folder)
 
@@ -82,29 +82,30 @@ if args.resume_net is not None:
 if args.auto_resume is not False:
     pth_list = os.listdir(save_folder)
     maxnum = 0
-    for pth_filename in pth_list:
-        maxnum = max(int(pth_filename.split("_")[4][:-4]), maxnum)
-    max_ep_name = cfg['name']+ '_epoch_' + str(maxnum) + '.pth'
-    print('Loading auto resume network...')
-    state_dict = torch.load(os.path.join(save_folder, max_ep_name))
-    print(os.path.join(save_folder, max_ep_name))
-    from collections import OrderedDict
+    if len(pth_list) > 0:
+        for pth_filename in pth_list:
+            maxnum = max(int(pth_filename.split("_")[4][:-4]), maxnum)
+        max_ep_name = cfg['name']+ '_epoch_' + str(maxnum) + '.pth'
+        print('Loading auto resume network...')
+        state_dict = torch.load(os.path.join(save_folder, max_ep_name))
+        print(os.path.join(save_folder, max_ep_name))
+        from collections import OrderedDict
 
-    new_state_dict = OrderedDict()
-    for k, v in state_dict.items():
-        head = k[:7]
-        if head == 'module.':
-            name = k[7:]  # remove `module.`
-        else:
-            name = k
-        new_state_dict[name] = v
-    net.load_state_dict(new_state_dict)
+        new_state_dict = OrderedDict()
+        for k, v in state_dict.items():
+            head = k[:7]
+            if head == 'module.':
+                name = k[7:]  # remove `module.`
+            else:
+                name = k
+            new_state_dict[name] = v
+        net.load_state_dict(new_state_dict)
 
 if num_gpu > 1 and gpu_train:
     net = torch.nn.DataParallel(net).cuda()
 else:
     net = net.cuda()
-
+# net = net.cpu()
 cudnn.benchmark = True
 
 optimizer = optim.SGD(net.parameters(), lr=initial_lr, momentum=momentum, weight_decay=weight_decay)

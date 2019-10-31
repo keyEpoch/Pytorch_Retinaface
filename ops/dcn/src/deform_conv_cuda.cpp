@@ -149,6 +149,12 @@ void shape_check(at::Tensor input, at::Tensor offset, at::Tensor *gradOutput,
   }
 }
 
+//deform_conv_cuda.deform_conv_forward_cuda(
+//                input, weight, offset, output, ctx.bufs_[0], ctx.bufs_[1],
+//                weight.size(3), weight.size(2), ctx.stride[1], ctx.stride[0],
+//                ctx.padding[1], ctx.padding[0], ctx.dilation[1],
+//                ctx.dilation[0], ctx.groups, ctx.deformable_groups,
+//                cur_im2col_step)
 int deform_conv_forward_cuda(at::Tensor input, at::Tensor weight,
                              at::Tensor offset, at::Tensor output,
                              at::Tensor columns, at::Tensor ones, int kW,
@@ -184,7 +190,7 @@ int deform_conv_forward_cuda(at::Tensor input, at::Tensor weight,
   long inputHeight = input.size(2);
   long inputWidth = input.size(3);
 
-  long nOutputPlane = weight.size(0);
+  long nOutputPlane = weight.size(0);   // output channels
 
   long outputWidth =
       (inputWidth + 2 * padW - (dilationW * (kW - 1) + 1)) / dW + 1;
