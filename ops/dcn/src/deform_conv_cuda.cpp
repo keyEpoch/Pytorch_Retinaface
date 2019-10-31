@@ -202,7 +202,7 @@ int deform_conv_forward_cuda(at::Tensor input, at::Tensor weight,
   output = output.view({batchSize / im2col_step, im2col_step, nOutputPlane,
                         outputHeight, outputWidth});
   columns = at::zeros(
-      {nInputPlane * kW * kH, im2col_step * outputHeight * outputWidth},
+      {nInputPlane * kW * kH, im2col_step * outputHeight * outputWidth},    // [C * W * H, im2col_step * W * H]
       input.options());
 
   if (ones.ndimension() != 2 ||
@@ -225,7 +225,7 @@ int deform_conv_forward_cuda(at::Tensor input, at::Tensor weight,
       {output_buffer.size(0), group, output_buffer.size(1) / group,
        output_buffer.size(2), output_buffer.size(3)});
 
-  for (int elt = 0; elt < batchSize / im2col_step; elt++) {
+  for (int elt = 0; elt < batchSize / im2col_step; elt++) {     // operate erery slices
     deformable_im2col(input[elt], offset[elt], nInputPlane, inputHeight,
                       inputWidth, kH, kW, padH, padW, dH, dW, dilationH,
                       dilationW, im2col_step, deformable_group, columns);
@@ -493,7 +493,7 @@ int deform_conv_backward_parameters_cuda(
   return 1;
 }
 
-void modulated_deform_conv_cuda_forward(
+void modulated_forward(
     at::Tensor input, at::Tensor weight, at::Tensor bias, at::Tensor ones,
     at::Tensor offset, at::Tensor mask, at::Tensor output, at::Tensor columns,
     int kernel_h, int kernel_w, const int stride_h, const int stride_w,

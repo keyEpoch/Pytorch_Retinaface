@@ -245,7 +245,7 @@ void deformable_im2col(
     const at::Tensor data_im, const at::Tensor data_offset, const int channels,
     const int height, const int width, const int ksize_h, const int ksize_w,
     const int pad_h, const int pad_w, const int stride_h, const int stride_w,
-    const int dilation_h, const int dilation_w, const int parallel_imgs,
+    const int dilation_h, const int dilation_w, const int parallel_imgs,    // parallel_imgs is im2col_step
     const int deformable_group, at::Tensor data_col)
 {
   // num_axes should be smaller than block size
@@ -261,7 +261,7 @@ void deformable_im2col(
         const scalar_t *data_offset_ = data_offset.data<scalar_t>();
         scalar_t *data_col_ = data_col.data<scalar_t>();
 
-        deformable_im2col_gpu_kernel<<<GET_BLOCKS(num_kernels), CUDA_NUM_THREADS>>>(
+        deformable_im2col_gpu_kernel<<<GET_BLOCKS(num_kernels), CUDA_NUM_THREADS>>>(    // CUDA_NUM_THREADS = 1024
             num_kernels, data_im_, data_offset_, height, width, ksize_h, ksize_w,
             pad_h, pad_w, stride_h, stride_w, dilation_h, dilation_w,
             channel_per_deformable_group, parallel_imgs, channels, deformable_group,

@@ -84,7 +84,7 @@ if args.auto_resume is not False:
     maxnum = 0
     if len(pth_list) > 0:
         for pth_filename in pth_list:
-            maxnum = max(int(pth_filename.split("_")[4][:-4]), maxnum)
+            maxnum = max(int(pth_filename.split("_")[2][:-4]), maxnum)
         max_ep_name = cfg['name']+ '_epoch_' + str(maxnum) + '.pth'
         print('Loading auto resume network...')
         state_dict = torch.load(os.path.join(save_folder, max_ep_name))
@@ -136,6 +136,8 @@ def train():
         start_iter = args.resume_epoch * epoch_size
     else:
         start_iter = 0
+
+    start_iter = epoch * epoch_size if args.auto_resume is not False else 0
 
     for iteration in range(start_iter, max_iter):
         if iteration % epoch_size == 0:
