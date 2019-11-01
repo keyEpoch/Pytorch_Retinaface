@@ -493,7 +493,7 @@ int deform_conv_backward_parameters_cuda(
   return 1;
 }
 
-void modulated_forward(
+void modulated_deform_conv_cuda_forward(
     at::Tensor input, at::Tensor weight, at::Tensor bias, at::Tensor ones,
     at::Tensor offset, at::Tensor mask, at::Tensor output, at::Tensor columns,
     int kernel_h, int kernel_w, const int stride_h, const int stride_w,
