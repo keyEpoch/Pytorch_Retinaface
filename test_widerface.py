@@ -4,14 +4,14 @@ import argparse
 import torch
 import torch.backends.cudnn as cudnn
 import numpy as np
-from data import cfg_mnet, cfg_re50
+from data import cfg_mnet, cfg_re50, cfg_mnet_sshdcn_v1
 from layers.functions.prior_box import PriorBox
 from utils.nms.py_cpu_nms import py_cpu_nms
 import cv2
 from models.retinaface import RetinaFace
 from utils.box_utils import decode, decode_landm
 from utils.timer import Timer
-
+import time
 
 parser = argparse.ArgumentParser(description='Retinaface')
 parser.add_argument('-m', '--trained_model', default='./weights/Resnet50_Final.pth',
@@ -74,6 +74,8 @@ if __name__ == '__main__':
         cfg = cfg_mnet
     elif args.network == "resnet50":
         cfg = cfg_re50
+    elif args.network == "mobile0.25_sshdcn":
+        cfg = cfg_mnet_sshdcn_v1
     # net and model
     net = RetinaFace(cfg=cfg, phase = 'test')
     net = load_model(net, args.trained_model, args.cpu)
@@ -93,6 +95,8 @@ if __name__ == '__main__':
     num_images = len(test_dataset)
 
     _t = {'forward_pass': Timer(), 'misc': Timer()}
+
+    t_start = time.time()
 
     # testing begin
     for i, img_name in enumerate(test_dataset):
@@ -216,4 +220,6 @@ if __name__ == '__main__':
                 os.makedirs("./results/")
             name = "./results/" + str(i) + ".jpg"
             cv2.imwrite(name, img_raw)
-
+    t_end = time.time()
+    sum_duration = t_end - t_start
+    os.system("echo {} >> duration.txt".format(sum_duration))
