@@ -98,7 +98,7 @@ class SSH(nn.Module):
             else:                   # use_dcn_v2
                 offset_mask = self.conv_offset(out)
                 offset = offset_mask[:, :18*self.ssh_deformable_groups, :, :]
-                mask = offset_mask[:, -9*self.ssh_deformable_groups, :, :]
+                mask = offset_mask[:, -9*self.ssh_deformable_groups:, :, :]
                 mask = 2.0 * mask.sigmoid()
                 out = self.dcn_conv(out, offset, mask)
 

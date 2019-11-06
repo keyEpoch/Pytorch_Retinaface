@@ -7,6 +7,8 @@
 #include <cmath>
 #include <vector>
 
+#include <chrono>
+
 void deformable_im2col(const at::Tensor data_im, const at::Tensor data_offset,
                        const int channels, const int height, const int width,
                        const int ksize_h, const int ksize_w, const int pad_h,
@@ -210,30 +212,37 @@ int deform_conv_forward_cuda(at::Tensor input, at::Tensor weight,
     ones = at::ones({outputHeight, outputWidth}, input.options());
   }
 
+  // [N, C, H, W] => [N/S, S, C, H, W]
   input = input.view({batchSize / im2col_step, im2col_step, nInputPlane,
                       inputHeight, inputWidth});
+  // [N/S, S, 2 * 9, H, W]
   offset =
       offset.view({batchSize / im2col_step, im2col_step,
                    deformable_group * 2 * kH * kW, outputHeight, outputWidth});
 
-  at::Tensor output_buffer =
+  at::Tensor output_buffer =         // [N/S, C, S*H, W]
       at::zeros({batchSize / im2col_step, nOutputPlane,
                  im2col_step * outputHeight, outputWidth},
                 output.options());
 
-  output_buffer = output_buffer.view(
+  output_buffer = output_buffer.view(       // [N/S, group, C/group, S*H, W]
       {output_buffer.size(0), group, output_buffer.size(1) / group,
        output_buffer.size(2), output_buffer.size(3)});
+
+//  auto t_start = std::chrono::steady_clock::now();
 
   for (int elt = 0; elt < batchSize / im2col_step; elt++) {     // operate erery slices
     deformable_im2col(input[elt], offset[elt], nInputPlane, inputHeight,
                       inputWidth, kH, kW, padH, padW, dH, dW, dilationH,
                       dilationW, im2col_step, deformable_group, columns);
+    std::cout << "weight shape: " << weight.size(0) << " " <<weight.size(1) << " " << weight.size(2) << " " <<weight.size(3) << std::endl;
+    std::cout << "columns shape: " << columns.size(0) << " " <<columns.size(1) << std::endl;
 
     columns = columns.view({group, columns.size(0) / group, columns.size(1)});
     weight = weight.view({group, weight.size(0) / group, weight.size(1),
                           weight.size(2), weight.size(3)});
-
+    std::cout << "weight shape after view: " << weight.size(0) << " " <<weight.size(1) << " " << weight.size(2) << " " <<weight.size(3) << " " <<weight.size(4)<< std::endl;
+    std::cout << "columns shape after view: " << columns.size(0) << " " <<columns.size(1) << " " <<columns.size(2)<< std::endl;
     for (int g = 0; g < group; g++) {
       output_buffer[elt][g] = output_buffer[elt][g]
                                   .flatten(1)
@@ -241,6 +250,10 @@ int deform_conv_forward_cuda(at::Tensor input, at::Tensor weight,
                                   .view_as(output_buffer[elt][g]);
     }
   }
+
+//  auto t_end = std::chrono::steady_clock::now();
+//  std::chrono::duration<double, std::micro> elapsed = t_end - t_start;
+//  std::cout << "deformable_img2col: " << elapsed.count()/1000. << " ms" << std::endl;
 
   output_buffer = output_buffer.view(
       {output_buffer.size(0), output_buffer.size(1) * output_buffer.size(2),
@@ -627,7 +640,7 @@ void modulated_deform_conv_cuda_backward(
                           weight.size(2), weight.size(3)});
 
     for (int g = 0; g < group; g++) {
-      columns[g].addmm_(weight[g].flatten(1).transpose(0, 1),
+      columns[g].addmm_(weight[g].flatten(1).transpose(0, 1),   // Tensor.addmm_() is an in-place version of torch.addmm()
                         grad_output[b][g].flatten(1), 0.0f, 1.0f);
     }
 

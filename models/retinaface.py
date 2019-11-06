@@ -54,7 +54,7 @@ class RetinaFace(nn.Module):
         super(RetinaFace,self).__init__()
         self.phase = phase
         backbone = None
-        if cfg['name'] == 'mobilenet0.25' or cfg['name'] == 'mobilenet0.25_sshdcn_v1':
+        if cfg['name'] == 'mobilenet0.25' or cfg['name'] == 'mobilenet0.25_sshdcn_v1' or cfg['name'] == 'mobilenet0.25_sshdcn_v2' or cfg['name'] == 'mobilenet0.25_sshdcn_v2':
             backbone = MobileNetV1()
             if cfg['pretrain']:
                 checkpoint = torch.load("./weights/mobilenetV1X0.25_pretrain.tar", map_location=torch.device('cpu'))

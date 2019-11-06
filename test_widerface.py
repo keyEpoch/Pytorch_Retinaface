@@ -4,7 +4,7 @@ import argparse
 import torch
 import torch.backends.cudnn as cudnn
 import numpy as np
-from data import cfg_mnet, cfg_re50, cfg_mnet_sshdcn_v1
+from data import cfg_mnet, cfg_re50, cfg_mnet_sshdcn_v1, cfg_mnet_sshdcn_v2
 from layers.functions.prior_box import PriorBox
 from utils.nms.py_cpu_nms import py_cpu_nms
 import cv2
@@ -76,6 +76,8 @@ if __name__ == '__main__':
         cfg = cfg_re50
     elif args.network == "mobile0.25_sshdcn":
         cfg = cfg_mnet_sshdcn_v1
+    elif args.network == "mobile0.25_sshdcn_v2":
+        cfg = cfg_mnet_sshdcn_v2
     # net and model
     net = RetinaFace(cfg=cfg, phase = 'test')
     net = load_model(net, args.trained_model, args.cpu)
@@ -85,7 +87,7 @@ if __name__ == '__main__':
     cudnn.benchmark = True
     device = torch.device("cpu" if args.cpu else "cuda")
     net = net.to(device)
-
+    print("device on: ", device)
     # testing dataset
     testset_folder = args.dataset_folder
     testset_list = args.dataset_folder[:-7] + "wider_val.txt"

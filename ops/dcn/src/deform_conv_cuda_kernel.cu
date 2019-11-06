@@ -186,6 +186,12 @@ __device__ scalar_t get_coordinate_weight(scalar_t argmax_h, scalar_t argmax_w,
   return weight;
 }
 
+// deformable_im2col_gpu_kernel<<<GET_BLOCKS(num_kernels), CUDA_NUM_THREADS>>>(    // CUDA_NUM_THREADS = 1024
+//           num_kernels, data_im_, data_offset_, height, width, ksize_h, ksize_w,
+//           pad_h, pad_w, stride_h, stride_w, dilation_h, dilation_w,
+//           channel_per_deformable_group, parallel_imgs, channels, deformable_group,
+//           height_col, width_col, data_col_);
+//      }));
 template <typename scalar_t>
 __global__ void deformable_im2col_gpu_kernel(const int n, const scalar_t *data_im, const scalar_t *data_offset,
                                              const int height, const int width, const int kernel_h, const int kernel_w,

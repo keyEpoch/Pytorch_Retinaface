@@ -86,3 +86,24 @@ cfg_re50_sshdcn_v1 = {
     'ssh_deformable_groups': 1
 }
 
+cfg_mnet_sshdcn_v2 = {
+    'name': 'mobilenet0.25_sshdcn_v2',
+    'min_sizes': [[16, 32], [64, 128], [256, 512]],
+    'steps': [8, 16, 32],
+    'variance': [0.1, 0.2],
+    'clip': False,
+    'loc_weight': 2.0,
+    'gpu_train': True,
+    'batch_size': 32,
+    'ngpu': 1,
+    'epoch': 250,
+    'decay1': 190,
+    'decay2': 220,
+    'image_size': 640,
+    'pretrain': True,
+    'return_layers': {'stage1': 1, 'stage2': 2, 'stage3': 3},
+    'in_channel': 32,
+    'out_channel': 64,
+    'ssh_dcn': 2,     # 1 => dcn_v1, 2 => dcn_v2
+    'ssh_deformable_groups': 1
+}
